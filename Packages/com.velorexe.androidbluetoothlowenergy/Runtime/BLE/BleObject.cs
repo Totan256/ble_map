@@ -18,9 +18,9 @@ namespace Android.BLE
         [SerializeField]
         private string name;
 
-        public int Rss => rss;
+        public int Rssi => rssi;
         [SerializeField]
-        private int rss;
+        private int rssi;
 
         public string Service => service;
         [SerializeField]

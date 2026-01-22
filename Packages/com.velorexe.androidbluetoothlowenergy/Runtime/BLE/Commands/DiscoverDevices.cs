@@ -61,7 +61,7 @@ namespace Android.BLE.Commands
         public override bool CommandReceived(BleObject obj)
         {
             if (string.Equals(obj.Command, "DiscoveredDevice"))
-                OnDeviceDiscovered?.Invoke(obj.Device, obj.Name, obj.Rss);
+                OnDeviceDiscovered?.Invoke(obj.Device, obj.Name, obj.Rssi);
             
             return string.Equals(obj.Command, "FinishedDiscovering");
         }
