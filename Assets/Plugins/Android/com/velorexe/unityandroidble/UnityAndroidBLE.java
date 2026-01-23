@@ -186,6 +186,10 @@ public class UnityAndroidBLE {
 
                         if (device.getName() != null) {
                             obj.name = device.getName();
+                        }else if(result.getScanRecord() != null){
+                            String advertisedName = result.getScanRecord().getDeviceName();
+                            if(advertisedName != null)
+                                obj.name = advertisedName;
                         }
 
                         sendToUnity(obj);

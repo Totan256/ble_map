@@ -9,6 +9,13 @@ public class DeviceSample
     public float timestamp;
 }
 
+// Compute Shaderに渡すための固定サイズ構造体
+public struct GPUDeviceSample
+{
+    public float rssi;
+    public Vector2 worldPosition;
+}
+
 public class DeviceEntity
 {
     public string address;

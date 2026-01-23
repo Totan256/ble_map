@@ -1,0 +1,36 @@
+#pragma kernel CSMain
+
+struct GPUDeviceSample
+{
+    float rssi;
+    float2 worldPosition;
+};
+
+StructuredBuffer<GPUDeviceSample> _Samples;
+int _SampleCount;
+float2 _MapSize; // 表示領域のサイズ
+float _MeasuredPower; // 1mでのRSSI
+float _EnvironmentalFactor; // n (Path loss exponent)
+
+RWTexture2D<float4> _Result;
+
+[numthreads(8, 8, 1)]
+void CSMain(uint3 id : SV_DispatchThreadID)
+{
+    float2 pixelPos = (float2) id.xy / _MapSize;
+    float totalIntensity = 0;
+
+    for (int i = 0; i < _SampleCount; i++)
+    {
+        // RSSIから推定距離(d)を算出
+        float d = pow(10, (_MeasuredPower - _Samples[i].rssi) / (10 * _EnvironmentalFactor));
+        
+        // 現在のピクセル位置と計測位置の距離
+        float distToSample = distance(pixelPos, _Samples[i].worldPosition);
+        
+        // 推定距離付近の強度を高くする（ガウス分布等の近似）
+        totalIntensity += exp(-pow(distToSample - d, 2) / 0.1);
+    }
+
+    _Result[id.xy] = float4(totalIntensity, 0, 1.0 - totalIntensity, 1.0);
+}
