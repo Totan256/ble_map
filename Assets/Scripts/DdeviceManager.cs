@@ -9,6 +9,7 @@ public class DdeviceManager : MonoBehaviour
     [SerializeField] private GPSManager gpsManager;
     [SerializeField] private BLEManager bleManager;
     [SerializeField] private DebugLogger logger;
+    private Dictionary<string, DeviceEntity> _devices = new Dictionary<string, DeviceEntity>();
 
     // Start is called before the first frame update
     void Start()
@@ -52,14 +53,24 @@ public class DdeviceManager : MonoBehaviour
     {
         logger.Log("start system");
         // GPSの取得を開始
-        gpsManager.GetCurrentPosition();
+        gpsManager.UpdatePosition();
         bleManager.StartScan();
     }
-    public void OnDeviceFound(string name, int rssi)
+    public void OnDeviceFound(string address, string name, int rssi)
     {
-        // シーケンス図の手順3: DeviceEntity更新 [cite: 58]
-        logger.Log($"デバイス検知: {name} (RSSI: {rssi})");
-        // ここで距離計算（DistanceCalculator）へ渡す処理を後で追加します
+        
+        //ogger.Log($"デバイス検知: {name} アドレス: {address} (RSSI: {rssi})");
+
+        if (!_devices.ContainsKey(address))
+        {
+            _devices[address] = new DeviceEntity { address = address, name = name };
+        }
+
+        // 現在のGPS位置（または推定位置）を取得して記録
+        Vector2 currentGpsPos = gpsManager.GetCurrentPosition(); // GPSManager側の実装に合わせて取得
+        _devices[address].AddSample(rssi, currentGpsPos);
+
+        logger.Log($"更新: {name} ({address}) RSSI: {rssi} サンプル数: {_devices[address].samples.Count}");
     }
 
 }

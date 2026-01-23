@@ -9,11 +9,11 @@ public class LeDeviceListAdapter {
     public Map<String, BluetoothDevice> mLeDevicesMap = new HashMap<String, BluetoothDevice>();
 
     public boolean AddDevice(BluetoothDevice device) {
-        if (this.mLeDevicesMap.get(device.getAddress()) != null) {
-            return false;
+        if (this.mLeDevicesMap.get(device.getAddress()) == null) {
+            this.mLeDevicesMap.put(device.getAddress(), device);
+            //return false;
         }
 
-        this.mLeDevicesMap.put(device.getAddress(), device);
         return true;
     }
 

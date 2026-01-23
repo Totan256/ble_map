@@ -4,11 +4,17 @@ using UnityEngine;
 
 public class GPSManager : MonoBehaviour
 {
+    private Vector2 currentPosition;
     [SerializeField] private DebugLogger logger;
 
-    public void GetCurrentPosition()
+    public void UpdatePosition()
     {
         StartCoroutine(GetLocationCoroutine());
+    }
+
+    public Vector2 GetCurrentPosition()
+    {
+        return currentPosition;
     }
 
     private IEnumerator GetLocationCoroutine()
@@ -47,6 +53,7 @@ public class GPSManager : MonoBehaviour
             // 緯度経度の取得に成功
             float lat = Input.location.lastData.latitude;
             float lon = Input.location.lastData.longitude;
+            currentPosition = new Vector2(lat, lon);
             logger.Log($"現在地取得成功！\n緯度: {lat}\n経度: {lon}");
         }
 

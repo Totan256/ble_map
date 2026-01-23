@@ -54,13 +54,9 @@ public class BLEManager : MonoBehaviour
     }
     private void OnDeviceDiscovered(string address, string name, int rssi)
     {
-        // ご要望の dDeviceManager.OnDeviceFound(name, rssi) を呼び出します。
-        // ※現在の DiscoverDevices.cs の実装では RSSI が取得項目に含まれていないため、
-        // ここでは便宜上 address を渡すか、プラグイン側の拡張を検討してください。
         if (dDeviceManager != null)
         {
-            // 例として第2引数にアドレスを渡しています
-            dDeviceManager.OnDeviceFound(name, rssi);
+            dDeviceManager.OnDeviceFound(address, name, rssi);
         }
     }
 
