@@ -12,6 +12,7 @@ public class DeviceSample
 // Compute Shaderに渡すための固定サイズ構造体
 public struct GPUDeviceSample
 {
+    public Color color;
     public float rssi;
     public Vector2 worldPosition;
 }
@@ -20,6 +21,7 @@ public class DeviceEntity
 {
     public string address;
     public string name;
+    public Color deviceColor;
     public List<DeviceSample> samples = new List<DeviceSample>();
     private const int MaxSampleSize = 100;
 
@@ -29,7 +31,7 @@ public class DeviceEntity
         {
             rssi = rssi,
             worldPosition = currentPos,
-            timestamp = Time.time
+            timestamp = Time.time,
         });
 
         if (samples.Count > MaxSampleSize)

@@ -1,9 +1,11 @@
-using UnityEngine;
 using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
 
 public class DebugLogger : MonoBehaviour
 {
     [SerializeField] private TextMeshProUGUI logText;
+    [SerializeField] private ScrollRect scrollRect;
 
     void Awake()
     {
@@ -24,6 +26,13 @@ public class DebugLogger : MonoBehaviour
         if (logText != null)
         {
             logText.text += "\n" + "[" + System.DateTime.Now.ToString("HH:mm:ss") + "] " + message;
+
+            // 追加：ログ追加後に一番下までスクロールさせる
+            if (scrollRect != null)
+            {
+                Canvas.ForceUpdateCanvases(); // レイアウトの更新を待つ
+                scrollRect.verticalNormalizedPosition = 0f; // 0は一番下を指す
+            }
         }
         else
         {

@@ -63,7 +63,9 @@ public class DdeviceManager : MonoBehaviour
 
         if (!_devices.ContainsKey(_address))
         {
-            _devices[_address] = new DeviceEntity { address = _address, name = _name };
+            _devices[_address] = new DeviceEntity { address = _address, name = _name,
+                deviceColor = Random.ColorHSV(0f, 1f, 0.6f, 1f, 0.7f, 1f)
+            };
         }
 
         // 現在のGPS位置（または推定位置）を取得して記録
@@ -77,10 +79,15 @@ public class DdeviceManager : MonoBehaviour
             logger.Log("update name");
         }
         if (_devices[_address].name==null)
-            logger.Log("no name");
+            logger.Log("no name :");
+        else
+        {
+            logger.Log($"{_name} :");
+        }
 
 
-        logger.Log($"更新: {_name} ({_address}) RSSI: {_rssi} サンプル数: {_devices[_address].samples.Count}");
+        logger.Log($"   ({_address}) RSSI: {_rssi}");
+        logger.Log($"   サンプル数:{_devices[_address].samples.Count}");
     }
 
 }
