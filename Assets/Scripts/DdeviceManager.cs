@@ -17,6 +17,18 @@ public class DdeviceManager : MonoBehaviour
         logger.Log("start check perm");
         CheckPermissions();
         logger.Log("finish check perm");
+        startTime = Time.time;
+    }
+    private float startTime;
+    private bool waited = false;
+    private void Update()
+    {
+        if (!waited && Time.time - startTime >= 5f)
+        {
+            //waited = true;
+            //bleManager.StartScan();
+            //gpsManager.UpdatePosition();
+        }
     }
 
     private string[] permissions = {

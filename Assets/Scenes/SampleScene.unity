@@ -1599,7 +1599,7 @@ GameObject:
   - component: {fileID: 677662371}
   - component: {fileID: 677662370}
   m_Layer: 0
-  m_Name: GPAManager
+  m_Name: GPSManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2602,7 +2602,7 @@ GameObject:
   - component: {fileID: 1177400707}
   - component: {fileID: 1177400708}
   m_Layer: 5
-  m_Name: Slider_EnvironmentalFactor
+  m_Name: Slider_EnvFact
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2674,10 +2674,10 @@ MonoBehaviour:
   m_FillRect: {fileID: 1924306033}
   m_HandleRect: {fileID: 1731515872}
   m_Direction: 0
-  m_MinValue: 0
-  m_MaxValue: 1
+  m_MinValue: 0.1
+  m_MaxValue: 10
   m_WholeNumbers: 0
-  m_Value: 0
+  m_Value: 0.1
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -2770,7 +2770,7 @@ GameObject:
   - component: {fileID: 1357099569}
   - component: {fileID: 1357099570}
   m_Layer: 5
-  m_Name: Slider_MeasuredPower
+  m_Name: Slider_Power
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2842,10 +2842,10 @@ MonoBehaviour:
   m_FillRect: {fileID: 1021734395}
   m_HandleRect: {fileID: 542812196}
   m_Direction: 0
-  m_MinValue: 0
-  m_MaxValue: 1
+  m_MinValue: -100
+  m_MaxValue: -30
   m_WholeNumbers: 0
-  m_Value: 0
+  m_Value: -30
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -3547,8 +3547,9 @@ GameObject:
   - component: {fileID: 1600494700}
   - component: {fileID: 1600494702}
   - component: {fileID: 1600494701}
+  - component: {fileID: 1600494703}
   m_Layer: 5
-  m_Name: ShaderDisplay
+  m_Name: MapDisplay
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3568,10 +3569,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1656177029}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 2.7407, y: 103.6829}
-  m_SizeDelta: {x: 1066.022, y: 1503.8464}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1600494701
 MonoBehaviour:
@@ -3586,7 +3587,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.21960786, g: 0.21960786, b: 0.21960786, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -3608,6 +3609,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1600494699}
   m_CullTransparentMesh: 1
+--- !u!114 &1600494703
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1600494699}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86710e43de46f6f4bac7c8e50813a599, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_AspectMode: 4
+  m_AspectRatio: 0.70886356
 --- !u!1 &1654847275
 GameObject:
   m_ObjectHideFlags: 0
@@ -3716,10 +3731,10 @@ RectTransform:
   - {fileID: 1177400707}
   m_Father: {fileID: 1543591484}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 100, y: 100}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1731515871
 GameObject:
@@ -3876,11 +3891,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6bfce7271f5226f41813ea097fe6e695, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  bleComputeShader: {fileID: 7200000, guid: 875fe373ea785704fbbab35c9bf57642, type: 3}
-  displayImage: {fileID: 1600494701}
+  computeShader: {fileID: 7200000, guid: 875fe373ea785704fbbab35c9bf57642, type: 3}
   deviceManager: {fileID: 2072235678}
-  measuredPowerSlider: {fileID: 1357099570}
-  environmentSlider: {fileID: 1177400708}
+  gpsManager: {fileID: 677662370}
+  displayImage: {fileID: 1600494701}
+  sliderPower: {fileID: 1357099570}
+  sliderEnv: {fileID: 1177400708}
 --- !u!1 &1843499136
 GameObject:
   m_ObjectHideFlags: 0
@@ -4071,36 +4087,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'test
-
-    s
-
-    s
-
-    s
-
-    s
-
-    s
-
-    ss
-
-
-    s
-
-    ss
-
-    s
-
-    s
-
-    s
-
-    s
-
-    s
-
-'
+  m_text: 
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 4ff09e305eaf624469fd4078dca457a7, type: 2}
   m_sharedMaterial: {fileID: 4985317136799704494, guid: 4ff09e305eaf624469fd4078dca457a7, type: 2}

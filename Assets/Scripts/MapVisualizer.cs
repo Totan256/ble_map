@@ -1,81 +1,163 @@
+using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
-using System.Collections.Generic;
+using Color = UnityEngine.Color;
 
 public class MapVisualizer : MonoBehaviour
 {
-    [SerializeField] private ComputeShader bleComputeShader;
-    [SerializeField] private RawImage displayImage;
+    [SerializeField] private ComputeShader computeShader;
     [SerializeField] private DdeviceManager deviceManager;
+    [SerializeField] private GPSManager gpsManager;
+    [SerializeField] private RawImage displayImage;
+    [SerializeField] private Slider sliderPower;
+    [SerializeField] private Slider sliderEnv;
 
-    [Header("Sliders")]
-    [SerializeField] private Slider measuredPowerSlider;
-    [SerializeField] private Slider environmentSlider;
-
-    private RenderTexture resultTexture;
+    private RenderTexture workTexture;    // 計算・蓄積用
+    private RenderTexture displayTexture; // 表示用
     private ComputeBuffer sampleBuffer;
-    private int kernelHandle;
-    private int resolution = 512; // テクスチャの解像度
+
+    private int kernelMain;
+    private int kernelClear;
+    private int currentDeviceIndex = 0;
+
+    private const float DEGREES_TO_METERS = 111000f;
 
     void Start()
     {
-        // RenderTextureの初期化（Compute Shaderの書き込み先）
-        resultTexture = new RenderTexture(resolution, resolution, 0, RenderTextureFormat.ARGB32);
-        resultTexture.enableRandomWrite = true; // RWTexture2Dへの書き込みに必要
-        resultTexture.Create();
+        // テクスチャの初期化
+        RectTransform rect = displayImage.rectTransform;
+        int width = Mathf.RoundToInt(rect.rect.width);
+        int height = Mathf.RoundToInt(rect.rect.height);
 
-        displayImage.texture = resultTexture;
-        kernelHandle = bleComputeShader.FindKernel("CSMain"); //
+        // 2. そのサイズに合わせてテクスチャを作成
+        workTexture = CreateRT(width, height);
+        displayTexture = CreateRT(width, height);
+        displayImage.texture = displayTexture;
+        // 例：1m地点のRSSIを-60、環境係数を2.0に設定
+        sliderPower.value = -60f;
+        sliderEnv.value = 2.0f;
+        
+        kernelMain = computeShader.FindKernel("CSMain");
+        kernelClear = computeShader.FindKernel("CSClear");
+    }
 
-        // スライダーの初期値設定
-        measuredPowerSlider.minValue = -100f;
-        measuredPowerSlider.maxValue = -30f;
-        measuredPowerSlider.value = -60f;
-
-        environmentSlider.minValue = 1.0f;
-        environmentSlider.maxValue = 5.0f;
-        environmentSlider.value = 2.0f;
+    RenderTexture CreateRT(int w, int h)
+    {
+        // フォーマットを適正化し、filterModeをBilinearにすることでドットの荒さを軽減
+        RenderTexture rt = new RenderTexture(w, h, 0, RenderTextureFormat.ARGBHalf);
+        rt.enableRandomWrite = true;
+        rt.filterMode = FilterMode.Bilinear; // これで滑らかになります
+        rt.wrapMode = TextureWrapMode.Clamp;
+        rt.Create();
+        return rt;
     }
 
     void Update()
     {
-        ExecuteShader();
-    }
-
-    void ExecuteShader()
-    {
-        // デバイスデータの準備
-        var devices = deviceManager._devices;
-        List<GPUDeviceSample> allSamples = new List<GPUDeviceSample>();
-
-        foreach (var device in devices.Values)
+        //初期化
+        if(currentDeviceIndex>=60 || deviceManager._devices.Count <= currentDeviceIndex)
         {
-            foreach (var s in device.samples)
+            Graphics.Blit(workTexture, displayTexture);
+
+            computeShader.SetTexture(kernelClear, "_Result", workTexture);
+            int tx = Mathf.CeilToInt(workTexture.width / 8.0f);
+            int ty = Mathf.CeilToInt(workTexture.height / 8.0f);
+            computeShader.Dispatch(kernelClear, tx, ty, 1);
+            currentDeviceIndex = 0;
+        }
+        Vector2 myPos;
+        GPUDeviceSample[] gpuSamples;
+        var devices = deviceManager._devices.Values
+                    .OrderBy(d => d.address) // アドレスでソート
+                    .ToList();
+        if (devices.Count == 0)
+        {
+            myPos = new Vector2(35.6812f, 139.7671f);
+            gpuSamples = new GPUDeviceSample[]
             {
-                allSamples.Add(new GPUDeviceSample { rssi = s.rssi, worldPosition = s.worldPosition });
+            new GPUDeviceSample {
+                rssi = -66.0f, // 2m
+                worldPosition = new Vector2(0.000018f, 0.000000f)*DEGREES_TO_METERS,
+                color = Color.blue
+            },
+            new GPUDeviceSample {
+                rssi = -74.0f, // 5m
+                worldPosition = new Vector2(0.000000f, 0.000045f)*DEGREES_TO_METERS,
+                color = Color.blue
+            },
+            new GPUDeviceSample {
+                rssi = -80.0f, // 10m
+                worldPosition = new Vector2(-0.000063f, -0.000063f)*DEGREES_TO_METERS,
+                color = Color.blue
+            }
+            };
+        }
+        else
+        {
+            myPos = gpsManager.GetCurrentPosition();
+            gpuSamples = devices[currentDeviceIndex].samples.Select(s => new GPUDeviceSample
+            {
+                rssi = s.rssi,
+                worldPosition = s.worldPosition,
+                color = devices[currentDeviceIndex].deviceColor
+            }).ToArray();
+            for(int i = 0; i < gpuSamples.Length; i++) {
+                gpuSamples[i].worldPosition = (gpuSamples[i].worldPosition - myPos) * DEGREES_TO_METERS;
             }
         }
+        currentDeviceIndex++;
 
-        if (allSamples.Count == 0) return;
+        // ストライドは float(1) + float2(2) + float4(4) = 7
+        int stride = sizeof(float) * 7;
 
-        // Compute Bufferの作成と転送
         if (sampleBuffer != null) sampleBuffer.Release();
-        sampleBuffer = new ComputeBuffer(allSamples.Count, sizeof(float) * 3); // float(rssi) + Vector2(pos)
-        sampleBuffer.SetData(allSamples.ToArray());
+        sampleBuffer = new ComputeBuffer(gpuSamples.Length, stride);
+        sampleBuffer.SetData(gpuSamples);
 
-        // パラメータのセット
-        bleComputeShader.SetBuffer(kernelHandle, "_Samples", sampleBuffer); //
-        bleComputeShader.SetInt("_SampleCount", allSamples.Count); //
-        bleComputeShader.SetVector("_MapSize", new Vector2(resolution, resolution)); //
-        bleComputeShader.SetTexture(kernelHandle, "_Result", resultTexture); //
+        computeShader.SetBuffer(kernelMain, "_Samples", sampleBuffer);
+        computeShader.SetInt("_SampleCount", gpuSamples.Length);
+        computeShader.SetVector("_MapSize", new Vector2(workTexture.width, workTexture.height));
 
-        // スライダーからの入力を反映
-        bleComputeShader.SetFloat("_MeasuredPower", measuredPowerSlider.value); //
-        bleComputeShader.SetFloat("_EnvironmentalFactor", environmentSlider.value); //
+        // 設定値の適用
+        computeShader.SetFloat("_MeasuredPower", sliderPower.value);
+        computeShader.SetFloat("_EnvironmentalFactor", sliderEnv.value);
+        computeShader.SetVector("_CurrentPosition", Vector2.zero);
+        computeShader.SetFloat("_ZoomLevel", 20f);
 
-        // Shader実行：[numthreads(8, 8, 1)]に合わせてグループ数を計算
-        int groups = resolution / 8;
-        bleComputeShader.Dispatch(kernelHandle, groups, groups, 1);
+        computeShader.SetTexture(kernelMain, "_Result", workTexture);
+        int threadGroupsX = Mathf.CeilToInt(workTexture.width / 8.0f);
+        int threadGroupsY = Mathf.CeilToInt(workTexture.height / 8.0f);
+        computeShader.Dispatch(kernelMain, threadGroupsX, threadGroupsY, 1);
+
+        
+    }
+
+    void DispatchShader(DeviceEntity device)
+    {
+        // DeviceEntity.cs の GPUDeviceSample 構造体に合わせる
+        var gpuSamples = device.samples.Select(s => new GPUDeviceSample
+        {
+            rssi = s.rssi,
+            worldPosition = s.worldPosition
+        }).ToArray();
+
+        if (sampleBuffer != null) sampleBuffer.Release();
+        sampleBuffer = new ComputeBuffer(gpuSamples.Length, sizeof(float) * 7);
+        sampleBuffer.SetData(gpuSamples);
+
+        computeShader.SetBuffer(kernelMain, "_Samples", sampleBuffer);
+        computeShader.SetInt("_SampleCount", gpuSamples.Length);
+        computeShader.SetVector("_MapSize", new Vector2(workTexture.width, workTexture.height));
+        computeShader.SetFloat("_MeasuredPower", sliderPower.value);
+        computeShader.SetFloat("_EnvironmentalFactor", sliderEnv.value);
+        computeShader.SetTexture(kernelMain, "_Result", workTexture);
+
+        int threadGroupsX = Mathf.CeilToInt(workTexture.width / 8.0f);
+        int threadGroupsY = Mathf.CeilToInt(workTexture.height / 8.0f);
+        computeShader.Dispatch(kernelMain, threadGroupsX, threadGroupsY, 1);
     }
 
     void OnDestroy()

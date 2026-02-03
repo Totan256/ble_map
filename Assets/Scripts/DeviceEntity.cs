@@ -12,9 +12,9 @@ public class DeviceSample
 // Compute Shaderに渡すための固定サイズ構造体
 public struct GPUDeviceSample
 {
-    public Color color;
     public float rssi;
     public Vector2 worldPosition;
+    public Color color;
 }
 
 public class DeviceEntity

@@ -11,6 +11,13 @@ public class GPSManager : MonoBehaviour
     {
         StartCoroutine(GetLocationCoroutine());
     }
+    private void Start()
+    {
+    }
+    private void Update()
+    {
+        
+    }
 
     public Vector2 GetCurrentPosition()
     {
