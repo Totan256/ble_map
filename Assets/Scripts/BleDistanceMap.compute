@@ -37,37 +37,56 @@ void CSMain(uint3 id : SV_DispatchThreadID)
 //*/
 ///*
 
-// BleDistanceMap.compute 内
+// BleDistanceMap.compute 内// BleDistanceMap.compute
 [numthreads(8, 8, 1)]
 void CSMain(uint3 id : SV_DispatchThreadID)
 {
     float2 uv = (float2) id.xy / _MapSize;
     float2 worldPixelPos = _CurrentPosition + (uv - 0.5) * _ZoomLevel;
 
-    
-    float intensity = 0;
-    float4 baseColor = float4(0, 0, 0, 1);
+    float totalWeight = 0;
+    float2 sumDir = float2(0, 0);
+    float4 weightedColor = float4(0, 0, 0, 0);
 
     for (int i = 0; i < _SampleCount; i++)
     {
-        // dはメートル単位
+        // 距離 d の計算
         float d = pow(10, (_MeasuredPower - _Samples[i].rssi) / (10 * _EnvironmentalFactor));
+        float2 vec = worldPixelPos - _Samples[i].worldPosition;
+        float distToSample = length(vec);
         
-        // worldPositionもメートル単位で送られてくるので、そのまま計算可能
-        float distToSample = distance(worldPixelPos, _Samples[i].worldPosition);
+        // このサンプルのリング強度 (0.2mのボケ幅)
+        float sampleIntensity = exp(-pow(distToSample - d, 2) / 0.04);
         
-        // 0.2m 程度のボケ幅でリングを描画
-        intensity += exp(-pow(distToSample - d, 2) / 0.04);
-        
-        //if (distToSample < d)
-        {
-            baseColor = baseColor + _Samples[i].color * intensity;
-        }
+        // 方向多様性のためのベクトル加算
+        totalWeight += sampleIntensity;
+        // 正規化ベクトルを重み付けして加算
+        sumDir += normalize(vec + 1e-6) * sampleIntensity;
+        // 色の重み付け加算
+        weightedColor += _Samples[i].color * sampleIntensity;
     }
-    
-    // 赤色成分に強度を乗せる、あるいは合成
-    _Result[id.xy] += baseColor;
-    _Result[id.xy] = min(float4(1, 1, 1, 1), _Result[id.xy]);
 
+    if (totalWeight > 0)
+    {
+        // 多様性係数: 0.0 (一方向のみ) ～ 1.0 (全方位に分散)
+        // length(sumDir) / totalWeight は「方向の偏り」を表す
+        float diversity = 1.0 - (length(sumDir) / totalWeight);
+        
+        // 三辺測量として優秀な（多様な角度から観測された）場所ほど強調する
+        // 1点観測(diversity=0)でも最低限表示されるよう下限(0.2等)を設ける
+        float finalIntensity = totalWeight * (0.2 + 0.8 * diversity);
+        
+        // 白飛び防止用の Soft Saturation (1.0を超えないように滑らかに収束させる)
+        // 強度が高いほど 1.0 に近づく
+        float exposure = 1.0 - exp(-0.5 * finalIntensity);
+        
+        float4 avgColor = weightedColor / totalWeight;
+        float4 baseColor = avgColor * exposure;
+
+        // 蓄積テクスチャへの書き込み
+        // 複数デバイスの重なりで白飛びさせたくない場合は += ではなく max を検討
+        // _Result[id.xy] += baseColor; 
+        _Result[id.xy] = max(_Result[id.xy], baseColor);
+    }
 }
 //*/

@@ -25,8 +25,8 @@ public class DdeviceManager : MonoBehaviour
     {
         if (!waited && Time.time - startTime >= 5f)
         {
-            //waited = true;
-            //bleManager.StartScan();
+            waited = true;
+            bleManager.StartScan();
             //gpsManager.UpdatePosition();
         }
     }

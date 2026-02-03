@@ -55,6 +55,7 @@ public class MapVisualizer : MonoBehaviour
         return rt;
     }
 
+    Vector2 currentPosition = Vector2.zero;
     void Update()
     {
         //初期化
@@ -66,6 +67,7 @@ public class MapVisualizer : MonoBehaviour
             int tx = Mathf.CeilToInt(workTexture.width / 8.0f);
             int ty = Mathf.CeilToInt(workTexture.height / 8.0f);
             computeShader.Dispatch(kernelClear, tx, ty, 1);
+            currentPosition = gpsManager.GetCurrentPosition();
             currentDeviceIndex = 0;
         }
         Vector2 myPos;
@@ -97,7 +99,7 @@ public class MapVisualizer : MonoBehaviour
         }
         else
         {
-            myPos = gpsManager.GetCurrentPosition();
+            myPos = currentPosition;
             gpuSamples = devices[currentDeviceIndex].samples.Select(s => new GPUDeviceSample
             {
                 rssi = s.rssi,

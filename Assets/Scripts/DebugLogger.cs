@@ -28,11 +28,11 @@ public class DebugLogger : MonoBehaviour
             logText.text += "\n" + "[" + System.DateTime.Now.ToString("HH:mm:ss") + "] " + message;
 
             // 追加：ログ追加後に一番下までスクロールさせる
-            if (scrollRect != null)
-            {
-                Canvas.ForceUpdateCanvases(); // レイアウトの更新を待つ
-                scrollRect.verticalNormalizedPosition = 0f; // 0は一番下を指す
-            }
+            //if (scrollRect != null)
+            //{
+            //    Canvas.ForceUpdateCanvases(); // レイアウトの更新を待つ
+            //    scrollRect.verticalNormalizedPosition = 0f; // 0は一番下を指す
+            //}
         }
         else
         {

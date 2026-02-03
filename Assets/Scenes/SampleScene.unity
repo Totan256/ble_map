@@ -782,6 +782,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   computeShader: {fileID: 7200000, guid: 875fe373ea785704fbbab35c9bf57642, type: 3}
   displayRenderer: {fileID: 1905242477}
+  _resultTexture: {fileID: 0}
 --- !u!4 &316401585
 Transform:
   m_ObjectHideFlags: 0
