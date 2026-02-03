@@ -26,15 +26,14 @@ public class GPSManager : MonoBehaviour
 
     private IEnumerator GetLocationCoroutine()
     {
-        // サービスが有効かチェック
         if (!Input.location.isEnabledByUser)
         {
             logger.Log("端末のGPS設定が無効です。");
             yield break;
         }
 
-        // サービスの開始
-        Input.location.Start();
+        // 精度5m、更新距離1mに設定して起動
+        Input.location.Start(5f, 1f);
         logger.Log("GPSサービス起動中...");
 
         // 初期化を待機（最大20秒）
@@ -55,16 +54,16 @@ public class GPSManager : MonoBehaviour
         {
             logger.Log("GPS取得失敗");
         }
-        else
+
+        // Running状態である限り、位置を更新し続ける
+        while (Input.location.status == LocationServiceStatus.Running)
         {
-            // 緯度経度の取得に成功
-            float lat = Input.location.lastData.latitude;
-            float lon = Input.location.lastData.longitude;
-            currentPosition = new Vector2(lat, lon);
-            logger.Log($"現在地取得成功！\n緯度: {lat}\n経度: {lon}");
+            LocationInfo data = Input.location.lastData;
+            currentPosition = new Vector2(data.latitude, data.longitude);
+            logger.Log($"現在地取得成功\n緯度: {data.latitude}\n経度: {data.longitude}");
+            // 必要に応じてログ出力
+            yield return new WaitForSeconds(1);
         }
 
-        // バッテリー消費を抑えるため、確認できたら一度停止させる
-        Input.location.Stop();
     }
 }

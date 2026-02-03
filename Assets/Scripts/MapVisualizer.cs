@@ -23,7 +23,7 @@ public class MapVisualizer : MonoBehaviour
     private int kernelClear;
     private int currentDeviceIndex = 0;
 
-    private const float DEGREES_TO_METERS = 111000f;
+    private const float LAT_DEGREE_TO_METERS = 111319.9f;
 
     void Start()
     {
@@ -80,17 +80,17 @@ public class MapVisualizer : MonoBehaviour
             {
             new GPUDeviceSample {
                 rssi = -66.0f, // 2m
-                worldPosition = new Vector2(0.000018f, 0.000000f)*DEGREES_TO_METERS,
+                worldPosition = new Vector2(0.000018f, 0.000000f)*LAT_DEGREE_TO_METERS,
                 color = Color.blue
             },
             new GPUDeviceSample {
                 rssi = -74.0f, // 5m
-                worldPosition = new Vector2(0.000000f, 0.000045f)*DEGREES_TO_METERS,
+                worldPosition = new Vector2(0.000000f, 0.000045f)*LAT_DEGREE_TO_METERS,
                 color = Color.blue
             },
             new GPUDeviceSample {
                 rssi = -80.0f, // 10m
-                worldPosition = new Vector2(-0.000063f, -0.000063f)*DEGREES_TO_METERS,
+                worldPosition = new Vector2(-0.000063f, -0.000063f)*LAT_DEGREE_TO_METERS,
                 color = Color.blue
             }
             };
@@ -104,8 +104,14 @@ public class MapVisualizer : MonoBehaviour
                 worldPosition = s.worldPosition,
                 color = devices[currentDeviceIndex].deviceColor
             }).ToArray();
-            for(int i = 0; i < gpuSamples.Length; i++) {
-                gpuSamples[i].worldPosition = (gpuSamples[i].worldPosition - myPos) * DEGREES_TO_METERS;
+            float latRad = myPos.x * Mathf.Deg2Rad;
+            float lonToMeters = LAT_DEGREE_TO_METERS * Mathf.Cos(latRad);
+            for (int i = 0; i < gpuSamples.Length; i++) {
+                // 緯度の差分 × 緯度1度あたりのメートル
+                float dy = (gpuSamples[i].worldPosition.x - myPos.x) * LAT_DEGREE_TO_METERS;
+                // 経度の差分 × 緯度補正した経度1度あたりのメートル
+                float dx = (gpuSamples[i].worldPosition.y - myPos.y) * lonToMeters;
+                gpuSamples[i].worldPosition = new Vector2(dy, dx);
             }
         }
         currentDeviceIndex++;
