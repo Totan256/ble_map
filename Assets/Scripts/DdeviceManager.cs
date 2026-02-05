@@ -18,17 +18,19 @@ public class DdeviceManager : MonoBehaviour
         CheckPermissions();
         logger.Log("finish check perm");
         startTime = Time.time;
+        //logger.Log("start BLE scan");
+        //bleManager.StartScan();
     }
     private float startTime;
     private bool waited = false;
     private void Update()
     {
-        if (!waited && Time.time - startTime >= 5f)
-        {
-            waited = true;
-            bleManager.StartScan();
-            //gpsManager.UpdatePosition();
-        }
+        //if (!waited && Time.time - startTime >= 5f)
+        //{
+        //    waited = true;
+            
+        //    //gpsManager.UpdatePosition();
+        //}
     }
 
     private string[] permissions = {

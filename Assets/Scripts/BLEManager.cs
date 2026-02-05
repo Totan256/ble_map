@@ -1,57 +1,71 @@
 using Android.BLE;
 using Android.BLE.Commands;
-using System;
+using System.Collections;
 using UnityEngine;
-using static Android.BLE.Commands.DiscoverDevices;
 
 public class BLEManager : MonoBehaviour
 {
     [SerializeField] private DdeviceManager dDeviceManager;
     [SerializeField] private DebugLogger logger;
-    private DiscoverDevices _currentScanCommand = null;
 
-    public void StartScan()
+    private DiscoverDevices _currentScanCommand = null;
+    
+
+    // スキャン設定
+    private const int SCAN_DURATION_MS = 10000; // 10秒間スキャン
+    private const float SCAN_INTERVAL_SEC = 20f; // 次のスキャンまで20秒待機（計30秒サイクル）
+
+    void Start()
     {
-        logger.Log("ble scan start");
-        // 1. プラグインの初期化を確認
+        // 1. 初期化は最初に一度だけ行う
+        InitializeBLE();
+
+        // 2. 定期的なスキャンループを開始
+        StartCoroutine(ScanRoutine());
+    }
+
+    private void InitializeBLE()
+    {
         if (!BleManager.IsInitialized)
         {
-            logger.Log("scan");
             try
             {
                 BleManager.Instance.Initialize();
+                logger.Log("BLE Initialized");
             }
             catch (System.Exception e)
             {
                 logger.Log($"Initialize Error: {e.Message}");
             }
-            logger.Log("scan");
         }
+    }
 
-        // すでにスキャン中の場合は一度停止する
-        if (_currentScanCommand != null)
+    private IEnumerator ScanRoutine()
+    {
+        while (true)
         {
-            StopScan();
+            if (_currentScanCommand == null)
+            {
+                StartScan();
+            }
+
+            // スキャン時間 + 待機時間分だけ待機
+            // Androidのスロットリング（30秒に5回制限）を考慮し、余裕を持たせる
+            yield return new WaitForSeconds((SCAN_DURATION_MS / 1000f) + SCAN_INTERVAL_SEC);
         }
+    }
 
-        // 2. DiscoverDevices コマンドの作成
-        // 引数: デバイス発見時のコールバック, 終了時のコールバック, スキャン時間(ミリ秒)
-        // 手動で停止(StopScan)する運用のため、スキャン時間は長めに設定するか、デフォルト値を使用します。
-        _currentScanCommand = new DiscoverDevices(OnDeviceDiscovered, OnScanFinished, 10000); //
+    public void StartScan()
+    {
+        if (_currentScanCommand != null) return;
 
-        // 3. コマンドをキューに追加して実行
+        logger.Log("BLE scan start");
+
+        // タイムアウト付きのコマンドを作成
+        _currentScanCommand = new DiscoverDevices(OnDeviceDiscovered, OnScanFinished, SCAN_DURATION_MS);
         BleManager.Instance.QueueCommand(_currentScanCommand);
     }
 
-    public void StopScan()
-    {
-        logger.Log("stop scan");
-        if (_currentScanCommand != null)
-        {
-            _currentScanCommand.End(); //
-            _currentScanCommand = null;
-        }
-    }
     private void OnDeviceDiscovered(string address, string name, int rssi)
     {
         if (dDeviceManager != null)
@@ -60,9 +74,19 @@ public class BLEManager : MonoBehaviour
         }
     }
 
-    /// スキャンが規定時間経過、または明示的に終了した際の処理
     private void OnScanFinished()
     {
+        logger.Log("Scan finished (timeout)");
         _currentScanCommand = null;
+    }
+
+    public void StopScan()
+    {
+        if (_currentScanCommand != null)
+        {
+            logger.Log("Stop scan manually");
+            _currentScanCommand.End();
+            _currentScanCommand = null;
+        }
     }
 }

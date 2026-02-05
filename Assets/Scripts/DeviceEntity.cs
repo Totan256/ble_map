@@ -22,11 +22,21 @@ public class DeviceEntity
     public string address;
     public string name;
     public Color deviceColor;
+    public bool isVisible = true;
     public List<DeviceSample> samples = new List<DeviceSample>();
     private const int MaxSampleSize = 100;
 
     public void AddSample(int rssi, Vector2 currentPos)
     {
+        foreach (DeviceSample sample in samples)
+        {
+            if(Vector2.Distance(currentPos, sample.worldPosition) < 0.1)
+            {
+                sample.rssi = (sample.rssi + rssi) / 2;
+                return;
+            }
+        }
+
         samples.Add(new DeviceSample
         {
             rssi = rssi,

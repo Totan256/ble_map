@@ -1,63 +1,110 @@
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using System.Collections.Generic;
 
 public class DeviceListController : MonoBehaviour
 {
-    [SerializeField] private DdeviceManager deviceManager; // データの参照元
-    [SerializeField] private GameObject itemPrefab;      // 先ほど作ったPrefab
-    [SerializeField] private Transform contentParent;    // ScrollViewのContent
+    [SerializeField] private DdeviceManager deviceManager;
+    [SerializeField] private GameObject itemPrefab;
+    [SerializeField] private Transform contentParent;
+    [SerializeField] private TMP_Dropdown sortDropdown;
 
-    // UI要素を保持しておくためのリスト
     private Dictionary<string, DeviceItemUI> uiEntries = new Dictionary<string, DeviceItemUI>();
 
-    // チェック状態を管理するList<bool>（要望に合わせて実装）
-    public List<bool> checkStates = new List<bool>();
+    public enum SortMode { NewestDesc, NewestAsc, RSSIDesc, RSSIAsc }
 
+    private void Start()
+    {
+        sortDropdown.ClearOptions();
+        sortDropdown.AddOptions(new List<string> { "Latest", "Oldest", "RSSI(High→Low)", "RSSI(Low→High)" });
+        sortDropdown.onValueChanged.AddListener(_ => RefreshList());
+
+        // 初回実行
+        RefreshList();
+    }
+
+    // Updateでの毎フレーム更新はやめ、必要な時だけ外部（DdeviceManagerなど）から呼ぶ運用を推奨
+    private float lastUpdateTime;
     void Update()
     {
-        // 1秒に数回など、頻度を抑えて更新しても良い
-        RefreshList();
+        // デバイスが増えた、または値が変わったタイミングで呼ぶ（1秒おきなど）
+        if (Time.time - lastUpdateTime > 1f)
+        {
+            RefreshList();
+            lastUpdateTime = Time.time;
+        }
     }
 
     public void RefreshList()
     {
-        int index = 0;
-        foreach (var pair in deviceManager._devices)
-        {
-            string addr = pair.Key;
-            DeviceEntity entity = pair.Value;
+        // 1. ソート処理（nullチェックとCountチェックを追加）
+        var sortedDevices = deviceManager._devices.Values.ToList();
 
-            if (!uiEntries.ContainsKey(addr))
+        switch ((SortMode)sortDropdown.value)
+        {
+            case SortMode.NewestDesc:
+                sortedDevices = sortedDevices.OrderByDescending(d => d.samples.Count > 0 ? d.samples[d.samples.Count - 1].timestamp : -1f).ToList();
+                break;
+            case SortMode.NewestAsc:
+                sortedDevices = sortedDevices.OrderBy(d => d.samples.Count > 0 ? d.samples[d.samples.Count - 1].timestamp : float.MaxValue).ToList();
+                break;
+            case SortMode.RSSIDesc:
+                sortedDevices = sortedDevices.OrderByDescending(d => d.samples.Count > 0 ? d.samples[d.samples.Count - 1].rssi : -200).ToList();
+                break;
+            case SortMode.RSSIAsc:
+                sortedDevices = sortedDevices.OrderBy(d => d.samples.Count > 0 ? d.samples[d.samples.Count - 1].rssi : 100).ToList();
+                break;
+        }
+
+        // 2. UIの生成と並び替え
+        for (int i = 0; i < sortedDevices.Count; i++)
+        {
+            var entity = sortedDevices[i];
+
+            if (!uiEntries.ContainsKey(entity.address))
             {
-                // 新しいデバイスが見つかったらUIを生成
                 GameObject newItem = Instantiate(itemPrefab, contentParent);
-                var ui = newItem.AddComponent<DeviceItemUI>();
-                // Prefab内のTMPコンポーネントをセット（実際はPrefab側のスクリプトで保持するのが理想）
+                // DeviceItemUIの取得または追加
+                var ui = newItem.GetComponent<DeviceItemUI>() ?? newItem.AddComponent<DeviceItemUI>();
+
+                // Prefabの構造に合わせてセットアップ（ここは元の実装を維持）
                 ui.Setup(newItem.transform.Find("text_name").GetComponent<TextMeshProUGUI>(),
                          newItem.transform.Find("text_address").GetComponent<TextMeshProUGUI>(),
                          newItem.transform.Find("Toggle").GetComponent<Toggle>(),
                          newItem.GetComponent<Image>());
 
-                uiEntries.Add(addr, ui);
-                checkStates.Add(false); // 初期値
+                uiEntries.Add(entity.address, ui);
             }
 
-            // UIの内容を更新
-            uiEntries[addr].UpdateData(entity.name ?? "Unknown", entity.address, entity.deviceColor);
+            // UIデータの更新
+            var lastSample = entity.samples.Count > 0 ? entity.samples[entity.samples.Count - 1] : null;
+            string displayName = string.IsNullOrEmpty(entity.name) ? "Unknown" : entity.name;
+            uiEntries[entity.address].UpdateData(displayName, entity.address, entity.deviceColor);
 
-            // チェックボックスの状態を管理リストと同期（簡易実装）
-            int currentIndex = index;
-            uiEntries[addr].toggle.onValueChanged.RemoveAllListeners();
-            uiEntries[addr].toggle.onValueChanged.AddListener((val) => {
-                checkStates[currentIndex] = val;
+            // 並び順（SiblingIndex）をソート結果に合わせる
+            uiEntries[entity.address].transform.SetSiblingIndex(i);
+
+            // イベントの再登録
+            uiEntries[entity.address].toggle.onValueChanged.RemoveAllListeners();
+            uiEntries[entity.address].toggle.isOn = entity.isVisible;
+            uiEntries[entity.address].toggle.onValueChanged.AddListener((val) => {
+                entity.isVisible = val;
             });
-
-            index++;
         }
     }
+    public void SetAllVisible(bool visible)
+    {
+        foreach (var entity in deviceManager._devices.Values)
+        {
+            entity.isVisible = visible;
+        }
+        RefreshList();
+    }
 }
+
+
 
 // 各行のUI参照を管理する補助クラス
 public class DeviceItemUI : MonoBehaviour

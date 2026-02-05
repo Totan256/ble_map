@@ -20,10 +20,32 @@ float _ZoomLevel; // 表示範囲（例：0.001で約110m四方）
 RWTexture2D<float4> _Result;
 
 // 蓄積用のテクスチャを真っ黒（透明）にクリアするカーネル
+// BleDistanceMap.compute
+
 [numthreads(8, 8, 1)]
 void CSClear(uint3 id : SV_DispatchThreadID)
 {
-    _Result[id.xy] = float4(0, 0, 0, 1);
+    float2 uv = (float2) id.xy / _MapSize;
+    // CSMainと同じ計算式でピクセルのワールド座標を特定
+    float2 worldPixelPos = _CurrentPosition + (uv - 0.5) * _ZoomLevel;
+
+    // 1mごとのグリッド計算 (0.5オフセットで整数値付近を判定)
+    float2 grid = abs(frac(worldPixelPos + 0.5) - 0.5);
+    
+    // ピクセル等倍の線の太さを維持するための計算 (アンチエイリアス)
+    float2 worldPerPixel = _ZoomLevel / _MapSize.xy;
+    float2 dGrid = worldPerPixel;
+    float2 lineWeight = smoothstep(dGrid * 1.5, dGrid * 0.5, grid);
+    float gridFactor = max(lineWeight.x, lineWeight.y);
+
+    // 10mごとの太線を強調する場合
+    float2 grid10 = abs(frac(worldPixelPos / 10.0 + 0.5) - 0.5) * 10.0;
+    float2 lineWeight10 = smoothstep(dGrid * 3.0, dGrid * 1.0, grid10);
+    float grid10Factor = max(lineWeight10.x, lineWeight10.y);
+
+    // 背景色（薄いグレーなど）を決定
+    float alpha = gridFactor * 0.2 + grid10Factor * 0.3; // 1m線は薄く、10m線は少し濃く
+    _Result[id.xy] = float4(alpha, alpha, alpha, 1.0);
 }
 
 /*
