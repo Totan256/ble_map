@@ -22,6 +22,7 @@ public class MapVisualizer : MonoBehaviour
     [SerializeField] private TextMeshProUGUI textEnvValue;
     [SerializeField] private Slider sliderZoom;
     [SerializeField] private TextMeshProUGUI textZoomValue;
+    [SerializeField] private Button setButton;
 
     private RenderTexture workTexture;    // 計算・蓄積用
     private RenderTexture displayTexture; // 表示用
@@ -142,6 +143,17 @@ public class MapVisualizer : MonoBehaviour
         if (devices.Count > 0)
         {
             progressFill.fillAmount = (float)currentDeviceIndex / devices.Count;
+        }
+        textEnvValue.text =   "Env   : "+sliderEnv.value;
+        textPowerValue.text = "Power : "+sliderPower.value;
+        textZoomValue.text =  "Zoom  : "+sliderZoom.value;
+        if(appliedEnv!=sliderEnv.value || appliedPower!=sliderPower.value || appliedZoom != sliderZoom.value)
+        {
+            setButton.image.color = Color.yellow;
+        }
+        else
+        {
+            setButton.image.color = Color.white;
         }
         //-----------------------------------------------
 
