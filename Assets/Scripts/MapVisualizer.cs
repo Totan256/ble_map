@@ -22,6 +22,8 @@ public class MapVisualizer : MonoBehaviour
     [SerializeField] private TextMeshProUGUI textEnvValue;
     [SerializeField] private Slider sliderZoom;
     [SerializeField] private TextMeshProUGUI textZoomValue;
+    [SerializeField] private Slider sliderNum;
+    [SerializeField] private TextMeshProUGUI textNumValue;
     [SerializeField] private Button setButton;
 
     private RenderTexture workTexture;    // 計算・蓄積用
@@ -35,6 +37,7 @@ public class MapVisualizer : MonoBehaviour
     private float appliedPower;
     private float appliedEnv;
     private float appliedZoom;
+    private int appliedNum;
 
     private const float LAT_DEGREE_TO_METERS = 111319.9f;
 
@@ -53,6 +56,7 @@ public class MapVisualizer : MonoBehaviour
         sliderPower.value = -60f;
         sliderEnv.value = 2.0f;
         sliderZoom.value = 20f;
+        sliderNum.value = 60;
         ApplySettings();
         
         kernelMain = computeShader.FindKernel("CSMain");
@@ -80,7 +84,7 @@ public class MapVisualizer : MonoBehaviour
                     .ToList();
 
         //初期化
-        if (currentDeviceIndex>=60 || devices.Count <= currentDeviceIndex)
+        if (currentDeviceIndex>=appliedNum || devices.Count <= currentDeviceIndex)
         {
             Graphics.Blit(workTexture, displayTexture);
 
@@ -147,7 +151,8 @@ public class MapVisualizer : MonoBehaviour
         textEnvValue.text =   "Env   : "+sliderEnv.value;
         textPowerValue.text = "Power : "+sliderPower.value;
         textZoomValue.text =  "Zoom  : "+sliderZoom.value;
-        if(appliedEnv!=sliderEnv.value || appliedPower!=sliderPower.value || appliedZoom != sliderZoom.value)
+        textNumValue.text =   "Num   : " + sliderNum.value;
+        if(appliedEnv!=sliderEnv.value || appliedPower!=sliderPower.value || appliedZoom != sliderZoom.value || appliedNum!=sliderNum.value)
         {
             setButton.image.color = Color.yellow;
         }
@@ -193,6 +198,7 @@ public class MapVisualizer : MonoBehaviour
         appliedPower = sliderPower.value;
         appliedEnv = sliderEnv.value;
         appliedZoom = sliderZoom.value;
+        appliedNum = (int)(sliderNum.value);
         // currentDeviceIndex = 0; // 必要なら再レンダリング開始
     }
 
@@ -202,5 +208,6 @@ public class MapVisualizer : MonoBehaviour
         sliderPower.value = -60f;
         sliderEnv.value = 2.0f;
         sliderZoom.value = 20f;
+        sliderNum.value = 60;
     }
 }

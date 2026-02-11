@@ -30,7 +30,7 @@ public class DeviceEntity
     {
         foreach (DeviceSample sample in samples)
         {
-            if(Vector2.Distance(currentPos, sample.worldPosition) < 0.1)
+            if(Vector2.Distance(currentPos, sample.worldPosition) < 0.00001)
             {
                 sample.rssi = (sample.rssi + rssi) / 2;
                 return;
