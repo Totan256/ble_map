@@ -14,17 +14,6 @@ public class MapVisualizer : MonoBehaviour
     [SerializeField] private GPSManager gpsManager;
 
     [SerializeField] private RawImage displayImage;
-    [SerializeField] private Image progressFill;
-
-    [SerializeField] private Slider sliderPower;
-    [SerializeField] private TextMeshProUGUI textPowerValue;
-    [SerializeField] private Slider sliderEnv;
-    [SerializeField] private TextMeshProUGUI textEnvValue;
-    [SerializeField] private Slider sliderZoom;
-    [SerializeField] private TextMeshProUGUI textZoomValue;
-    [SerializeField] private Slider sliderNum;
-    [SerializeField] private TextMeshProUGUI textNumValue;
-    [SerializeField] private Button setButton;
 
     private RenderTexture workTexture;    // 計算・蓄積用
     private RenderTexture displayTexture; // 表示用
@@ -33,13 +22,13 @@ public class MapVisualizer : MonoBehaviour
     private int kernelMain;
     private int kernelClear;
     private int currentDeviceIndex = 0;
-
-    private float appliedPower;
-    private float appliedEnv;
-    private float appliedZoom;
-    private int appliedNum;
-
     private const float LAT_DEGREE_TO_METERS = 111319.9f;
+
+    public float render_progress;
+    public float appliedPower;
+    public float appliedEnv;
+    public float appliedZoom;
+    public int appliedNum;
 
     void Start()
     {
@@ -52,13 +41,7 @@ public class MapVisualizer : MonoBehaviour
         workTexture = CreateRT(width, height);
         displayTexture = CreateRT(width, height);
         displayImage.texture = displayTexture;
-        // 例：1m地点のRSSIを-60、環境係数を2.0に設定
-        sliderPower.value = -60f;
-        sliderEnv.value = 2.0f;
-        sliderZoom.value = 20f;
-        sliderNum.value = 60;
-        ApplySettings();
-        
+                
         kernelMain = computeShader.FindKernel("CSMain");
         kernelClear = computeShader.FindKernel("CSClear");
     }
@@ -73,7 +56,16 @@ public class MapVisualizer : MonoBehaviour
         rt.Create();
         return rt;
     }
-
+    private void UpdateBuffer(int requiredCount, int stride)
+    {
+        // サイズが変わった場合、またはバッファが未作成の場合のみ作り直す
+        if (sampleBuffer == null || sampleBuffer.count != requiredCount)
+        {
+            if (sampleBuffer != null) sampleBuffer.Release();
+            // 0だとエラーになるので最低1は確保
+            sampleBuffer = new ComputeBuffer(Mathf.Max(1, requiredCount), stride);
+        }
+    }
     Vector2 currentPosition = Vector2.zero;
     void Update()
     {
@@ -143,30 +135,15 @@ public class MapVisualizer : MonoBehaviour
         }
         currentDeviceIndex++;
 
-        // UI 進捗表示　後で移す-------------------------
+        // 進捗更新
         if (devices.Count > 0)
         {
-            progressFill.fillAmount = (float)currentDeviceIndex / devices.Count;
+            render_progress = (float)currentDeviceIndex / devices.Count;
         }
-        textEnvValue.text =   "Env   : "+sliderEnv.value;
-        textPowerValue.text = "Power : "+sliderPower.value;
-        textZoomValue.text =  "Zoom  : "+sliderZoom.value;
-        textNumValue.text =   "Num   : " + sliderNum.value;
-        if(appliedEnv!=sliderEnv.value || appliedPower!=sliderPower.value || appliedZoom != sliderZoom.value || appliedNum!=sliderNum.value)
-        {
-            setButton.image.color = Color.yellow;
-        }
-        else
-        {
-            setButton.image.color = Color.white;
-        }
-        //-----------------------------------------------
 
-        // ストライドは float(1) + float2(2) + float4(4) = 7
+
         int stride = sizeof(float) * 7;
-
-        if (sampleBuffer != null) sampleBuffer.Release();
-        sampleBuffer = new ComputeBuffer(gpuSamples.Length, stride);
+        UpdateBuffer(gpuSamples.Length, stride);
         sampleBuffer.SetData(gpuSamples);
 
         computeShader.SetBuffer(kernelMain, "_Samples", sampleBuffer);
@@ -192,22 +169,4 @@ public class MapVisualizer : MonoBehaviour
         if (sampleBuffer != null) sampleBuffer.Release();
     }
 
-    // 変更決定ボタンから呼ぶ関数
-    public void ApplySettings()
-    {
-        appliedPower = sliderPower.value;
-        appliedEnv = sliderEnv.value;
-        appliedZoom = sliderZoom.value;
-        appliedNum = (int)(sliderNum.value);
-        // currentDeviceIndex = 0; // 必要なら再レンダリング開始
-    }
-
-    // リセットボタンから呼ぶ関数
-    public void ResetSliders()
-    {
-        sliderPower.value = -60f;
-        sliderEnv.value = 2.0f;
-        sliderZoom.value = 20f;
-        sliderNum.value = 60;
-    }
 }

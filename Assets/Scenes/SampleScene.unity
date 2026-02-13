@@ -158,7 +158,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 93, y: 5.59}
+  m_SizeDelta: {x: 93, y: 0}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &10413581
 MonoBehaviour:
@@ -1114,7 +1114,7 @@ MonoBehaviour:
   m_Direction: 0
   m_MinValue: 0
   m_MaxValue: 150
-  m_WholeNumbers: 0
+  m_WholeNumbers: 1
   m_Value: 150
   m_OnValueChanged:
     m_PersistentCalls:
@@ -2314,7 +2314,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 594888183}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -2323,8 +2323,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -406.15, y: -500}
-  m_SizeDelta: {x: 200, y: 50}
+  m_AnchoredPosition: {x: 0, y: -500}
+  m_SizeDelta: {x: 1000, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &594888185
 MonoBehaviour:
@@ -2911,8 +2911,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -406.10678, y: -590}
-  m_SizeDelta: {x: 200, y: 50}
+  m_AnchoredPosition: {x: 0, y: -590}
+  m_SizeDelta: {x: 1000, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &707690370
 MonoBehaviour:
@@ -4862,8 +4862,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1778351800}
-        m_TargetAssemblyTypeName: MapVisualizer, Assembly-CSharp
+      - m_Target: {fileID: 2124841837}
+        m_TargetAssemblyTypeName: UIManager, Assembly-CSharp
         m_MethodName: ResetSliders
         m_Mode: 1
         m_Arguments:
@@ -5726,8 +5726,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1778351800}
-        m_TargetAssemblyTypeName: MapVisualizer, Assembly-CSharp
+      - m_Target: {fileID: 2124841837}
+        m_TargetAssemblyTypeName: UIManager, Assembly-CSharp
         m_MethodName: ApplySettings
         m_Mode: 1
         m_Arguments:
@@ -6173,8 +6173,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -406.15, y: -410}
-  m_SizeDelta: {x: 200, y: 50}
+  m_AnchoredPosition: {x: 0, y: -410}
+  m_SizeDelta: {x: 1000, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1561779782
 MonoBehaviour:
@@ -7016,16 +7016,11 @@ MonoBehaviour:
   deviceManager: {fileID: 2072235678}
   gpsManager: {fileID: 677662370}
   displayImage: {fileID: 1600494701}
-  progressFill: {fileID: 672873041}
-  sliderPower: {fileID: 1357099570}
-  textPowerValue: {fileID: 149370421}
-  sliderEnv: {fileID: 1177400708}
-  textEnvValue: {fileID: 1561779782}
-  sliderZoom: {fileID: 478607360}
-  textZoomValue: {fileID: 594888185}
-  sliderNum: {fileID: 265721051}
-  textNumValue: {fileID: 707690370}
-  setButton: {fileID: 1508031535}
+  render_progress: 0
+  appliedPower: 0
+  appliedEnv: 0
+  appliedZoom: 0
+  appliedNum: 0
 --- !u!1 &1806474778
 GameObject:
   m_ObjectHideFlags: 0
@@ -8424,6 +8419,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 46254aed50f0ded4d8c1428339c21a91, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  mapVisualizer: {fileID: 1778351800}
+  progressFill: {fileID: 672873041}
+  sliderPower: {fileID: 1357099570}
+  textPowerValue: {fileID: 149370421}
+  sliderEnv: {fileID: 1177400708}
+  textEnvValue: {fileID: 1561779782}
+  sliderZoom: {fileID: 478607360}
+  textZoomValue: {fileID: 594888185}
+  sliderNum: {fileID: 265721051}
+  textNumValue: {fileID: 707690370}
+  setButton: {fileID: 1508031535}
   shaderPage: {fileID: 1656177028}
   listPage: {fileID: 53716210}
   logPage: {fileID: 1430387772}
@@ -8604,7 +8610,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2689248702267161118, guid: 9f050f18327b2344ba5e6fac4d10a488, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7800561659466975017, guid: 9f050f18327b2344ba5e6fac4d10a488, type: 3}
       propertyPath: m_AnchorMax.y
